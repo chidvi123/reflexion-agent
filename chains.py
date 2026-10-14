@@ -21,7 +21,7 @@ llm = ChatGroq(model='openai/gpt-oss-120b')
 parser = JsonOutputToolsParser(return_id=True)
 parser_pydantic = PydanticToolsParser(tools=[AnswerQuestion])
 
-
+########################################################################################################
 actor_prompt_template = ChatPromptTemplate.from_messages(
     [
         (
@@ -40,13 +40,19 @@ actor_prompt_template = ChatPromptTemplate.from_messages(
     time=lambda : datetime.datetime.now().isoformat()
 )
 
+#################################################################################################
+
 first_responder_prompt_template = actor_prompt_template.partial(
     first_instruction="Provide a detailed ~250 word answer"
 )
 
+
 first_responder = first_responder_prompt_template | llm.bind_tools(
-    tools=[AnswerQuestion],tool_choice='AnswerQuestion'
+    tools=[AnswerQuestion],
+    tool_choice="AnswerQuestion"
 )
+
+##################################################################################################
 
 revise_instructions = """
 Revise your previous answer using the new information.
@@ -58,9 +64,12 @@ Revise your previous answer using the new information.
     - You should use the previous critique to remove superfluous information from your answer to make SURE it is not more than 250 words.
 """
 
+##########################################################################
+
 revisor = actor_prompt_template.partial(
     first_instruction=revise_instructions
-) | llm.bind_tools(tool=[ReviseAnswer],tool_choice='ReviseAnswer')
+) | llm.bind_tools(tools=[ReviseAnswer],tool_choice='ReviseAnswer')
+###########################################################################
 
 
 if __name__=="__main__":
