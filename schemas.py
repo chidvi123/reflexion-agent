@@ -5,14 +5,32 @@ class Reflection(BaseModel):
     missing: str = Field(description="Critique of what is missing . ")
     superfluous : str = Field(description="Critique of what is superfluous ")
 
-class AnswerQuestion(BaseModel):
-    """Answer the question """
 
-    answer : str = Field(description="~250 word detailed answer to the question ")
-    reflection : Reflection = Field(description = "Your reflection on the initial answer .")
-    search_queries : List[str] = Field(
-        description="1-3 search queries for researching improvements to address the critique of your current answer . "
+class AnswerQuestion(BaseModel):
+    """Provide an initial answer and critique."""
+
+    answer: str = Field(
+        description=(
+            "Only the answer to the user's question, approximately "
+            "150 words. Do not include reflection or search queries "
+            "inside this field."
+        )
     )
+
+    reflection: Reflection = Field(
+        description=(
+            "Critique the answer. Populate only missing and "
+            "superfluous; do not include search queries here."
+        )
+    )
+
+    search_queries: List[str] = Field(
+        description=(
+            "A top-level list containing 1-3 search queries "
+            "to improve the answer."
+        )
+    )
+
 
 class ReviseAnswer(AnswerQuestion):
     references : List[str] = Field(

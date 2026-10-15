@@ -17,7 +17,15 @@ MAX_ITERATIONS=2
 def draft_node(state:MessagesState):
     """"Draft the initial response. """
     response = first_responder.invoke({"messages":state["messages"]})
+
+    print("---------------------------------------------------------------------")
+    print(response.tool_calls)
+    print("---------------------------------------------------------------------")
     return {"messages":[response]}
+
+# sends and empty response at first to first_repsonder.
+# then first responder is a chain , so the chain implements -> go to chain (chains.py) 
+# when the message is returned its added to state i.e MessageState
 
 def revise_node(state:MessagesState):
     """Revise the answer based on tool results ."""
@@ -38,7 +46,7 @@ def event_loop(state : MessagesState) ->Literal["execute_tools",END]:
 
 
 builder = StateGraph(MessagesState)
-builder.add_node('draft',draft_node)
+builder.add_node('draft',draft_node) # calls draft_node function when called 
 #builder.set_entry_point('draft/create')
 builder.add_node('execute_tools',execute_tools)
 builder.add_node('revise',revise_node)
@@ -47,10 +55,11 @@ builder.add_edge('draft','execute_tools')
 builder.add_edge('execute_tools','revise')
 builder.add_conditional_edges('revise',event_loop,['execute_tools',END])
 
-graph = builder.compile()
+graph = builder.compile() # starts at draft node 
 print(graph.get_graph().draw_mermaid())
 graph.get_graph().draw_mermaid_png(output_file_path="graph.png")
 
+# starting invocation with user message to write about {some context }
 res = graph.invoke(
     {
         "messages":[

@@ -16,7 +16,7 @@ from langchain_groq import ChatGroq
 
 from schemas import AnswerQuestion,Reflection,ReviseAnswer
 
-llm = ChatGroq(model='openai/gpt-oss-120b')
+llm = ChatGroq(model='qwen/qwen3.8-27b')
 
 parser = JsonOutputToolsParser(return_id=True)
 parser_pydantic = PydanticToolsParser(tools=[AnswerQuestion])
@@ -25,13 +25,20 @@ parser_pydantic = PydanticToolsParser(tools=[AnswerQuestion])
 actor_prompt_template = ChatPromptTemplate.from_messages(
     [
         (
-            "system",
+            "system",  
             """
-                You are an expert researcher. Current time :{time}
+            You are an expert researcher. Current time: {time}
 
-                1. {first_instruction}
-                2. Reflect and critique your answer . Be severe to maximize improvement .
-                3. Recommend search queries to research information and improve your answer .
+            Follow these instructions:
+            1. {first_instruction}
+            2. Put only the answer in the answer field.
+            3. Put the critique in reflection.missing and
+            reflection.superfluous.
+            4. Put 1-3 search queries in the top-level
+            search_queries field.
+            5. Never put search_queries inside reflection.
+            6. Do not duplicate the reflection or search queries
+            inside the answer field.
             """
         ),
         MessagesPlaceholder(variable_name="messages"),
@@ -43,14 +50,17 @@ actor_prompt_template = ChatPromptTemplate.from_messages(
 #################################################################################################
 
 first_responder_prompt_template = actor_prompt_template.partial(
-    first_instruction="Provide a detailed ~250 word answer"
+    first_instruction="Provide a detailed ~150 word answer for the user query ."
 )
 
-
+# call from draft_node (main.py)
 first_responder = first_responder_prompt_template | llm.bind_tools(
     tools=[AnswerQuestion],
     tool_choice="AnswerQuestion"
 )
+
+# sends the user query to first_responder_prompt-template then the template goes to llm which has tools already bound to it .
+# llm calls for AnswerQuestion -> go to tool_executor.py 
 
 ##################################################################################################
 
